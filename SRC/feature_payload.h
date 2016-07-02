@@ -46,6 +46,13 @@
 #define MTP_PORT                1
 #define HOST_PORT               2
 
+
+#define HAA_SIZE 15 //host address advertisement.
+#define MTP_TYPE_HAA 4
+#define HAT_ADD 1
+#define HAT_DEL 0
+
+
 /* Container for VID Table */
 struct vid_addr_tuple {
 	char eth_name[ETH_ADDR_LEN]; 	// Port of Acquisition
@@ -78,6 +85,26 @@ struct child_pvid_tuple {
 	struct child_pvid_tuple *next;
   time_t last_updated;        // last updated time
 };
+
+
+/*Container for hat(host address table)*/
+struct hat_tuple
+{
+struct ether_addr mac;
+struct ether_addr switch_id;
+bool local;
+struct hat_new_path *path;  //link list of different paths i.e ports and cost to reach this host.
+struct hat_tuple *next;     //pointer to next host.
+};
+
+struct hat_new_path
+{
+char port[ETH_ADDR_LEN]; // Port of Acquisition
+uint8_t cost; 
+struct hat_new_path *next_path;
+};
+
+
 
 /* Local host broadcast ports Table */
 struct local_bcast_tuple {
@@ -127,3 +154,9 @@ int checkForFailures(char **);
 bool checkForFailuresCPVID();
 //bool isInterfaceActive(char *);
 #endif /* FT_PYL_H */
+
+/* Function Prototypes for Unicast frame forwarding information */
+int add_entry_hat(struct ether_addr *mac, uint8_t cost, struct ether_addr *switch_id, char *port);
+int build_haa_PAYLOAD(uint8_t *data, struct ether_addr * mac, uint8_t cost, struct ether_addr * switch_id);
+int add_tuple_hat(struct hat_tuple * new);
+struct hat_tuple* getInstance_hat();

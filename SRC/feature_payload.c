@@ -6,6 +6,165 @@ struct vid_addr_tuple *main_vid_tbl_head = NULL;
 //struct vid_addr_tuple *bkp_vid_tbl_head = NULL; // we can maintain backup paths in Main VID Table only, just a thought
 struct child_pvid_tuple *cpvid_tbl_head = NULL; 
 struct local_bcast_tuple *local_bcast_head = NULL;
+struct hat_tuple * hat_head = NULL;
+
+
+
+struct hat_tuple* getInstance_hat()
+{
+   return hat_head;
+}
+
+
+/*
+   1-successful
+   0-fail
+*/
+//Host MAC Address: SwitchID: Cost: Port: local :sec_port :cost 
+int add_tuple_hat(struct hat_tuple * new)
+{
+// adding entry at top - no sorting required.
+   new->next=hat_head;
+   hat_head=new;
+   return 1;
+}
+
+
+//haa after receiving haa:
+//: haa : Ethernet Frame Header: msg type: remove/add flag: Host MAC address: Cost: SwitchID: 
+int build_haa_PAYLOAD(uint8_t *data, struct ether_addr * mac, uint8_t cost, struct ether_addr * switch_id)
+{
+   int index=0;
+   data[index]=MTP_TYPE_HAA;
+   index++;
+   data[index]=HAT_ADD;
+   index++;
+   memcpy(&data[index], mac, sizeof(struct ether_addr));
+   index+=sizeof(struct ether_addr);
+   data[index]=cost+1;
+   index++;
+   memcpy(&data[index], switch_id, sizeof(struct ether_addr));
+   index+=sizeof(struct ether_addr);
+   return index;
+}
+
+
+
+//adding entry into hat after receiving adv (haa)
+/*
+returns 1 - has addition
+        0 - no addition (port already present and has same or better cost) or error.
+*/
+int add_entry_hat(struct ether_addr *mac, uint8_t cost, struct ether_addr *switch_id, char *port)
+{
+	struct hat_tuple * hat_ptr =  (struct hat_tuple*) getInstance_hat();
+	bool f1=false;
+	while(hat_ptr != NULL)
+	{
+	  if(memcmp(&hat_ptr->mac, mac, sizeof (struct ether_addr))==0)  
+	   {  f1=true; 
+              break;  // hat_ptr points to the node containing the required host.
+	   }
+    }
+
+	/*struct local_bcast_tuple* lbcast_ptr = getInstance_lbcast_LL();
+	bool local = false;
+	while(lbcast_ptr != NULL)
+	{
+	 if(recvOnEtherPort == lbcast_ptr->eth_name)
+	    local=true;
+	}  */
+
+	if(f1==false) //host not present in hat
+	{
+		struct hat_tuple *new_hat = (struct hat_tuple*) calloc (1, sizeof(struct hat_tuple));
+		struct hat_new_path *np = (struct hat_new_path*) calloc (1, sizeof(struct hat_new_path));
+
+		np->cost = cost; //while sending haa we already incremented the cost by 1.
+		strcpy(np->port, port);
+		np->next_path=NULL;
+
+		memcpy(&new_hat->switch_id, switch_id, sizeof(struct ether_addr)); //memcpy?
+		new_hat->local=false;
+		new_hat->path=np;
+		memcpy(&new_hat->mac, mac, sizeof(struct ether_addr));
+		new_hat->next = NULL;
+
+		add_tuple_hat(new_hat);
+
+		    printf("\nAddition successful");
+		    printf("\nmac\t  local\t  port\t  cost");
+		    printf("\n%s\t %d\t %s\t %d\n",ether_ntoa(&new_hat->mac),new_hat->local,np->port,np->cost);
+            return true;
+
+	}
+	else // host already present in hat
+	{
+        struct hat_new_path *current = hat_ptr->path;
+		struct hat_new_path *prev = NULL;
+		bool btr_port_present=false;
+		while(current != NULL && cost >= current->cost) //same port same cost? & same port multiple cost?
+        {  //for now adding all 
+			if(strcmp(port,current->port)==0) // same port having lower cost or equal cost, so no addition	
+		              { btr_port_present=true; }			
+			prev=current;
+			current=current->next_path;
+				
+		}
+		if(!btr_port_present)
+		{
+			struct hat_new_path * new = (struct hat_new_path*) calloc (1, sizeof(struct hat_new_path));
+			new->cost=cost;
+			strcpy(new->port, port);
+			new->next_path=NULL;
+			if(prev==NULL)
+			{
+			new->next_path=hat_ptr->path;
+			hat_ptr->path=new;
+			}
+			else
+			{
+			prev->next_path=new;
+			new->next_path=current;
+			}
+			//removing old and having more cost entry of same port if present.
+			prev=new;
+			while(current != NULL && strcmp(port,current->port)!=0)
+			{
+			prev=current;
+			current=current->next_path;
+			}
+			if(current!= NULL)
+			{  
+			prev->next_path=current->next_path;
+			free(current);
+			}
+
+			//printing:
+			printf("\n%s :",ether_ntoa(&hat_ptr->mac));
+			struct hat_new_path* cur =hat_ptr->path;
+			while(cur!=NULL)
+			{
+			printf("\t%s %d,",cur->port,cur->cost);
+			cur=cur->next_path;
+			}
+
+			return true; // has addition.
+		}
+		else
+		{ return false; }
+	}
+
+
+}
+
+
+
+
+
+
+
+
 
 /*
  *   isChild() - This method checks if the input VID param is child of any VID in Main 
