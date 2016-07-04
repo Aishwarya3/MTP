@@ -511,7 +511,6 @@ void mtp_start() {
 									//free(payload);
 								}
 								printf("\nBuild haa successful. paydload length: %d\npayload : ",payloadLen);
-								int i=0;
 								for(i=0;i<15;i++)
 								{  printf("%02x:",payload[i]);  } 
 								printf("\n");
@@ -687,7 +686,7 @@ void mtp_start() {
 				hat_ptr =  (struct hat_tuple*) getInstance_hat();
 				while(hat_ptr != NULL)
 				{
-					if(memcmp(&hat_ptr->mac, &eheader->ether_dhost, sizeof (struct ether_addr)==0)
+					if(memcmp(&hat_ptr->mac, &eheader->ether_dhost, sizeof (struct ether_addr))==0)
 					{
 					//hat_ptr->path->port;
 					dataSend(hat_ptr->path->port, recvBuffer, recv_len);
