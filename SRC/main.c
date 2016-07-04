@@ -105,7 +105,7 @@ int main (int argc, char** argv) {
 				payload = (uint8_t*) calloc (1, MAX_BUFFER_SIZE);
 				payloadLen = build_VID_ADVT_PAYLOAD(payload, interfaceNames[i]);
 				if (payloadLen) {
-					printf("Root sending frst vid adv.");
+					//printf("Root sending frst vid adv.");
 					ctrlSend(interfaceNames[i], payload, payloadLen);
 				}
 				free(payload);
@@ -594,6 +594,7 @@ void mtp_start() {
 			else  //Unicast frame:
 		    {
 				// RECEIVED A UNICAST ETHERNET FRAME:
+				printf("Received a unicast frame.");
 				struct hat_tuple * hat_ptr =  (struct hat_tuple*) getInstance_hat();
 				bool f1=false;
 				bool local = false;
