@@ -174,7 +174,7 @@ void print_hat()
         nextpath=nextrow->path;
 		while(nextpath!=NULL)
 		{
-			printf("\tPort:%s Cost:%d,",cur->port,cur->cost);
+			printf("\tPort:%s Cost:%d,",nextpath->port,nextpath->cost);
 			nextpath=nextpath->next_path;
 		}
 		nextrow=nextrow->next;
