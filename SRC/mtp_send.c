@@ -90,8 +90,8 @@ int ctrlSend(char *etherPort, uint8_t *inPayload, int payloadLen) {
 	if (sendto(sockfd, frame, frame_Size, 0, (struct sockaddr*) &socket_address, sizeof(struct sockaddr_ll)) < 0) {
 		printf("ERROR: Send failed\n");
 	}
-	else
-	{ printf("Send successful.");}
+	//else
+	//{ printf("Send successful.");}
 
 	free(eh);
 	close(sockfd);
