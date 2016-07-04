@@ -119,25 +119,25 @@ int add_entry_hat(struct ether_addr *mac, uint8_t cost, struct ether_addr *switc
 			new->next_path=NULL;
 			if(prev==NULL)
 			{
-			new->next_path=hat_ptr->path;
-			hat_ptr->path=new;
+				new->next_path=hat_ptr->path;
+				hat_ptr->path=new;
 			}
 			else
 			{
-			prev->next_path=new;
-			new->next_path=current;
+				prev->next_path=new;
+				new->next_path=current;
 			}
 			//removing old and having more cost entry of same port if present.
 			prev=new;
 			while(current != NULL && strcmp(port,current->port)!=0)
 			{
-			prev=current;
-			current=current->next_path;
+				prev=current;
+				current=current->next_path;
 			}
 			if(current!= NULL)
 			{  
-			prev->next_path=current->next_path;
-			free(current);
+				prev->next_path=current->next_path;
+				free(current);
 			}
 
 			//printing:
@@ -159,7 +159,29 @@ int add_entry_hat(struct ether_addr *mac, uint8_t cost, struct ether_addr *switc
 }
 
 
+void print_hat()
+{
 
+	struct hat_tuple * nextrow = (struct hat_tuple*) calloc (1, sizeof(struct hat_tuple));
+	struct hat_new_path * nextpath = (struct hat_new_path*) calloc (1, sizeof(struct hat_new_path));
+
+	printf("\n\n\n HAT entries:");
+	printf("\nHost Mac\t\t\t Switch-ID\t\t\t Local\t\t\t Paths:");
+	nextrow=hat_head;
+	while(nextrow!=NULL)
+	{
+		printf("\n%s\t %s\t %d\t",ether_ntoa(&nextrow->mac),ether_ntoa(&nextrow->switch_id),nextrow->local);
+        nextpath=nextrow->path;
+		while(nextpath!=NULL)
+		{
+			printf("\tPort:%s Cost:%d,",cur->port,cur->cost);
+			nextpath=nextpath->next_path;
+		}
+		nextrow=nextrow->next;
+	}
+	printf("\n");
+
+}
 
 
 

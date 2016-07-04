@@ -160,3 +160,4 @@ int add_entry_hat(struct ether_addr *mac, uint8_t cost, struct ether_addr *switc
 int build_haa_PAYLOAD(uint8_t *data, struct ether_addr * mac, uint8_t cost, struct ether_addr * switch_id);
 int add_tuple_hat(struct hat_tuple * new);
 struct hat_tuple* getInstance_hat();
+void print_hat();
