@@ -594,6 +594,7 @@ void mtp_start() {
 			else  //Unicast frame:
 		    {
 				// RECEIVED A UNICAST ETHERNET FRAME:
+				printf("Received a unicast frame.");
 				struct hat_tuple * hat_ptr =  (struct hat_tuple*) getInstance_hat();
 				bool f1=false;
 				bool local = false;
