@@ -253,7 +253,7 @@ int  build_VID_ADVT_PAYLOAD(uint8_t *data, char *interface) {
   struct vid_addr_tuple *current = main_vid_tbl_head;
 
   // Port from where VID request came.
-  int i;
+  int i=0;
   for(; interface[i]!='\0'; i++) {
     if(interface[i] >= 48 && interface[i] <= 57) {
       egressPort = (egressPort * 10) + (interface[i] - 48);
