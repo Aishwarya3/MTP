@@ -119,25 +119,25 @@ int add_entry_hat(struct ether_addr *mac, uint8_t cost, struct ether_addr *switc
 			new->next_path=NULL;
 			if(prev==NULL)
 			{
-			new->next_path=hat_ptr->path;
-			hat_ptr->path=new;
+				new->next_path=hat_ptr->path;
+				hat_ptr->path=new;
 			}
 			else
 			{
-			prev->next_path=new;
-			new->next_path=current;
+				prev->next_path=new;
+				new->next_path=current;
 			}
 			//removing old and having more cost entry of same port if present.
 			prev=new;
 			while(current != NULL && strcmp(port,current->port)!=0)
 			{
-			prev=current;
-			current=current->next_path;
+				prev=current;
+				current=current->next_path;
 			}
 			if(current!= NULL)
 			{  
-			prev->next_path=current->next_path;
-			free(current);
+				prev->next_path=current->next_path;
+				free(current);
 			}
 
 			//printing:
@@ -159,7 +159,29 @@ int add_entry_hat(struct ether_addr *mac, uint8_t cost, struct ether_addr *switc
 }
 
 
+void print_hat()
+{
 
+	struct hat_tuple * nextrow = (struct hat_tuple*) calloc (1, sizeof(struct hat_tuple));
+	struct hat_new_path * nextpath = (struct hat_new_path*) calloc (1, sizeof(struct hat_new_path));
+
+	printf("\n\n\n HAT entries:");
+	printf("\nHost Mac\t\t\t Switch-ID\t\t\t Local\t\t\t Paths:");
+	nextrow=hat_head;
+	while(nextrow!=NULL)
+	{
+		printf("\n%s\t %s\t %d\t",ether_ntoa(&nextrow->mac),ether_ntoa(&nextrow->switch_id),nextrow->local);
+        nextpath=nextrow->path;
+		while(nextpath!=NULL)
+		{
+			printf("\tPort:%s Cost:%d,",cur->port,cur->cost);
+			nextpath=nextpath->next_path;
+		}
+		nextrow=nextrow->next;
+	}
+	printf("\n");
+
+}
 
 
 
@@ -231,7 +253,7 @@ int  build_VID_ADVT_PAYLOAD(uint8_t *data, char *interface) {
   struct vid_addr_tuple *current = main_vid_tbl_head;
 
   // Port from where VID request came.
-  int i;
+  int i=0;
   for(; interface[i]!='\0'; i++) {
     if(interface[i] >= 48 && interface[i] <= 57) {
       egressPort = (egressPort * 10) + (interface[i] - 48);
@@ -431,26 +453,30 @@ bool isMain_VID_Table_Empty() {
  *     		VID Table,		Implemented Using linked list. 
  * 		Head Ptr,		*vid_table
  * 		@return 
- * 		true 			Successful Addition
- * 		false 			Failure to add/ Already exists.		 	
+ * 		< 3 			Successful Addition, addition in first 3 entries of Main VID Table
+ * 		-1			Failure to add/ Already exists.
+ * 		> 3   			Successful Addition, addition after first 3 entries of Main VID Table (Backup VID Table)		 	
 **/
 
-bool add_entry_LL(struct vid_addr_tuple *node) {
+int add_entry_LL(struct vid_addr_tuple *node) {
 	struct vid_addr_tuple *current = main_vid_tbl_head;
+	int tracker = 0;
 	// If the entry is not already present, we add it.
 	if (!find_entry_LL(node)) {
 		if (main_vid_tbl_head == NULL) {
-				node->membership = 1;
-				main_vid_tbl_head = node;
+			node->membership = 1;
+			main_vid_tbl_head = node;
+			tracker++;
 		} else {
 			struct vid_addr_tuple *previous = NULL;
-			
+
 			int mship = 0;	
 			// place in accordance with cost, lowest to highest.
 			while(current!=NULL && (current->path_cost < node->path_cost)) {
 				previous = current;
 				mship = current->membership;
 				current = current->next;
+				tracker += 1;
 			}
 
 			// if new node has lowest cost.
@@ -458,6 +484,7 @@ bool add_entry_LL(struct vid_addr_tuple *node) {
 				node->next = main_vid_tbl_head;
 				node->membership = 1;
 				main_vid_tbl_head = node;
+				tracker += 1;
 			} else {
 				previous->next = node;
 				node->next = current;
@@ -470,9 +497,9 @@ bool add_entry_LL(struct vid_addr_tuple *node) {
 				current = current->next;
 			}
 		}
-		return true;
+		return tracker;
 	}
-	return false;
+	return -1;
 }
 
 /**
@@ -606,25 +633,31 @@ int checkForFailures(char **deletedVIDs) {
 bool delete_entry_LL(char *vid_to_delete) {
   struct vid_addr_tuple *current = main_vid_tbl_head;
   struct vid_addr_tuple *previous = NULL;
-  bool hasDeletions = false;
+  bool hasDeletionsInMainVID = false; // top 3
+  int hasDeletions = false;
+  int tracker = 0;
 
   while (current != NULL) {
-    if (strncmp(vid_to_delete, current->vid_addr, strlen(vid_to_delete)) == 0) {
-      struct vid_addr_tuple *temp = current;
+	  tracker += 1;
+	  if (strncmp(vid_to_delete, current->vid_addr, strlen(vid_to_delete)) == 0) {
+		  struct vid_addr_tuple *temp = current;
 
-      if (previous == NULL) {
-        main_vid_tbl_head = current->next;
-      } else {
-        previous->next = current->next;
-      }
+		  if (previous == NULL) {
+			  main_vid_tbl_head = current->next;
+		  } else {
+			  previous->next = current->next;
+		  }
 
-      current = current->next;
-      hasDeletions = true;
-      free(temp);
-      continue;
-    }
-    previous = current;
-    current = current->next;
+		  current = current->next;
+		  if (tracker > 0 && tracker <= 3) {
+			hasDeletionsInMainVID  = true;
+		  }
+		  hasDeletions = true;
+		  free(temp);
+		  continue;
+	  }
+	  previous = current;
+	  current = current->next;
   }
 
   // fix any wrong membership values.
@@ -635,7 +668,7 @@ bool delete_entry_LL(char *vid_to_delete) {
       membership++;
     }
   }
-  return hasDeletions;
+  return hasDeletionsInMainVID;
 }
 
 

@@ -48,8 +48,8 @@ int main (int argc, char** argv) {
 	char **interfaceNames;
 
 	// Check number of Arguments.
-	if (argc < 1) {
-		printf("Error: Node spec or Source Tier address missing. Format ./main <non MTS/root MTS> <ROOT MTS ID>\n");
+	if (argc < 2) {
+		printf("Error: Node spec or ROOT MTS ID missing. Format ./main <non MTS/root MTS> <ROOT MTS ID>\n");
 		printf("Error: 0 for non MTS, 1 for root MTS\n");
 		exit(1);
 	}
@@ -372,10 +372,12 @@ void mtp_start() {
 									new_node->path_cost = (uint8_t) path_cost;
 									memcpy(&new_node->mac, (struct ether_addr *)&eheader->ether_shost, sizeof(struct ether_addr));
 
+									int mainVIDTracker = add_entry_LL(new_node);
 									// Add into VID Table, if addition success, update all other connected peers about the change.
-									if (add_entry_LL(new_node)) {
-										hasAdditions = true;
-
+									if (mainVIDTracker > 0) {
+										if (mainVIDTracker <= 3) {
+											hasAdditions = true;
+										}
 										// If peer has VID derived from me earlier and has a change now.
 										if (numberVIDS == (uint8_t) recvBuffer[16]) { // if same first ID
 											// Check PVID used by peer is a derived PVID from me.
@@ -481,42 +483,46 @@ void mtp_start() {
                     //: haa : Ethernet Frame Header: msg type: remove/add flag: Host MAC address: Cost: SwitchID: 
 
 				case MTP_TYPE_HAA: 
-						uint8_t operation = (uint8_t) recvBuffer[15];
+					{	
+					    uint8_t operation = (uint8_t) recvBuffer[15];
 						if(operation == HAT_ADD)
 						{
-						 struct ether_addr * hat_mac=(struct ether_addr *) (recvBuffer+16) //[16];
-						 uint8_t cost=recvBuffer[22];
-						 struct ether_addr * switch_id =  (struct ether_addr *) (recvBuffer+23) //[23]
-						 bool has_additions=add_entry_hat(hat_mac, cost, switch_id, recvOnEtherPort);
-						 if(has_additions)
-						 {
-						 //whenever there is anentry in hat - sending an haa
-						 //: haa : Ethernet Frame Header: Host MAC address: Cost: SwitchID: remove/add flag
-							int i;
-							uint8_t *payload = NULL;
-							uint8_t payloadLen;
-							for (i=0; i < numberOfInterfaces; i++) 
+							 struct ether_addr * hat_mac=(struct ether_addr *) (recvBuffer+16); //[16];
+							 uint8_t cost=recvBuffer[22];
+							 struct ether_addr * switch_id =  (struct ether_addr *) (recvBuffer+23); //[23]
+							 bool has_additions=add_entry_hat(hat_mac, cost, switch_id, recvOnEtherPort);
+
+							 if(has_additions)
+							 {
+								print_hat();
+							 //whenever there is an entry in hat - sending an haa
+								memset(interfaceNames, '\0', sizeof(char) * MAX_INTERFACES * MAX_INTERFACES);
+								int numberOfInterfaces = getActiveInterfaces(interfaceNames);
+								uint8_t *payload = NULL;
+								uint8_t payloadLen;
+								for (i=0; i < numberOfInterfaces; i++) 
 								{
-								payload = (uint8_t*) calloc (1, HAA_SIZE);
-								payloadLen = build_haa_PAYLOAD(payload,hat_mac,cost,switch_id);
-								if (payloadLen) {
-								ctrlSend(interfaceNames[i], payload, payloadLen);
+									payload = (uint8_t*) calloc (1, HAA_SIZE);
+									payloadLen = build_haa_PAYLOAD(payload,hat_mac,cost,switch_id);
+									if (payloadLen) {
+									ctrlSend(interfaceNames[i], payload, payloadLen);
+									}
+									//free(payload);
 								}
-								//free(payload);
-							}
 								printf("\nBuild haa successful. paydload length: %d\npayload : ",payloadLen);
 								int i=0;
 								for(i=0;i<15;i++)
-							{  printf("%02x:",payload[i]);  } 
-										printf("\n");
+								{  printf("%02x:",payload[i]);  } 
+								printf("\n");
 								free(payload); 
-						  }
+							}
 						}
 						if(operation == HAT_DEL) 
 						{  //Link failure code  }
 						else
 						{  printf("Unknown host address advertisement.");  }
-						break;
+					}
+					break;
 
 
 				default:
@@ -588,30 +594,43 @@ void mtp_start() {
 				// RECEIVED A UNICAST ETHERNET FRAME:
 				struct hat_tuple * hat_ptr =  (struct hat_tuple*) getInstance_hat();
 				bool f1=false;
+				bool local = false;
 				while(hat_ptr != NULL)
 				{
 				  if(memcmp(&hat_ptr->mac, &eheader->ether_shost, sizeof (struct ether_addr))==0)  //main.c line 241 eheader
-				   {  f1=true; break; }   //host (SENDER) already present
+				   {  f1=true; break;  }   //host (SENDER) already present
 				}
 
 				struct local_bcast_tuple* lbcast_ptr = getInstance_lbcast_LL();
-				bool local = false;
+				
 				while(lbcast_ptr != NULL)
 				{
 				 if(strcmp(recvOnEtherPort, lbcast_ptr->eth_name)==0)  //local host
 					local=true;
 				}
 
-				if(f1==false)  //IF NOT PRESENT add it to hat
+				/*
+
+				if we receive a data frame:
+					Only two possibilities for source? 
+					1) local host
+					2) Already present in the HAT if it is not local?
+
+
+				*/
+
+				if(f1==false)  //IF NOT PRESENT add it to hat  (For now considering it as local but checking lbcast table just in case)
 				{
+					//local=true;
 					struct hat_tuple *new_hat = (struct hat_tuple*) calloc (1, sizeof(struct hat_tuple));
 					struct hat_new_path *np = (struct hat_new_path*) calloc (1, sizeof(struct hat_new_path));
 
 					if(local == true)
 					{  np->cost = 0; }
 					else
-					{ np->cost =  99999999; } //?
+					{ np->cost =  99999999; } //? later we might receive a HAA and replace this cost. 
 
+					//np->cost = 0;
 
 					strcpy(np->port, recvOnEtherPort);
 					np->next_path=NULL;
@@ -635,30 +654,35 @@ void mtp_start() {
 						printf("\nmac\t  local\t  port\t  cost");
 						printf("\n%s\t %d\t %s\t %d\n",ether_ntoa(&new_hat->mac),new_hat->local,np->port,np->cost);
 
+						print_hat();
+
+						memset(interfaceNames, '\0', sizeof(char) * MAX_INTERFACES * MAX_INTERFACES);
+						int numberOfInterfaces = getActiveInterfaces(interfaceNames);
+
 						//sending haa
 						int i = 0;
 						uint8_t *payload = NULL;
 						uint8_t payloadLen;
 						for (; i < numberOfInterfaces; i++) 
-							{
+						{
 							payload = (uint8_t*) calloc (1, HAA_SIZE);
 							payloadLen = build_haa_PAYLOAD(payload, (struct ether_addr *)&eheader->ether_shost, np->cost, sid);
 							if (payloadLen) {
 							ctrlSend(interfaceNames[i], payload, payloadLen);
 							}
 						}
-							printf("\nBuild haa successful. paydload length: %d\npayload : ",payloadLen);
-							i=0;
-							for(i=0;i<15;i++)
+						printf("\nBuild haa successful. paydload length: %d\npayload : ",payloadLen);
+						i=0;
+						for(i=0;i<15;i++)
 						{  printf("%02x:",payload[i]);  } 
-							free(payload); 
+						free(payload); 
 
 				}
 
 				//forwarding the frame towards destination.
 				// lookup the dest in the hat and forward on appropriate port.
-				struct hat_tuple * 
-					hat_ptr =  (struct hat_tuple*) getInstance_hat();
+				//struct hat_tuple * 
+				hat_ptr =  (struct hat_tuple*) getInstance_hat();
 				while(hat_ptr != NULL)
 				{
 					if(memcmp(&hat_ptr->mac, &eheader->ether_dhost, sizeof (struct ether_addr)==0)
@@ -669,7 +693,7 @@ void mtp_start() {
 					}
 				}
 				if(hat_ptr==NULL)
-       					{ printf("Error could not send frame!!! destination not present in hat."); }
+       				{ printf("Error could not send frame!!! destination not present in hat."); }
 
 
 			   //sent (unicast)
