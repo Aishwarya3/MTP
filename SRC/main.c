@@ -498,6 +498,7 @@ void mtp_start() {
 							 //whenever there is an entry in hat - sending an haa
 								memset(interfaceNames, '\0', sizeof(char) * MAX_INTERFACES * MAX_INTERFACES);
 								int numberOfInterfaces = getActiveInterfaces(interfaceNames);
+								int i;
 								uint8_t *payload = NULL;
 								uint8_t payloadLen;
 								for (i=0; i < numberOfInterfaces; i++) 
@@ -518,7 +519,8 @@ void mtp_start() {
 							}
 						}
 						if(operation == HAT_DEL) 
-						{  //Link failure code  }
+						{  //Link failure code  
+						}
 						else
 						{  printf("Unknown host address advertisement.");  }
 					}
