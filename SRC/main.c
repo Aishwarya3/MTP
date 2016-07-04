@@ -629,7 +629,7 @@ void mtp_start() {
 					if(local == true)
 					{  np->cost = 0; }
 					else
-					{ np->cost =  99999999; } //? later we might receive a HAA and replace this cost. 
+					{ np->cost =  256; } //? later we might receive a HAA and replace this cost. 
 
 					//np->cost = 0;
 
