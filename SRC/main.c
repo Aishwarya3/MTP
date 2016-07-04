@@ -483,43 +483,46 @@ void mtp_start() {
                     //: haa : Ethernet Frame Header: msg type: remove/add flag: Host MAC address: Cost: SwitchID: 
 
 				case MTP_TYPE_HAA: 
-						uint8_t operation = (uint8_t) recvBuffer[15];
+					{	
+					    uint8_t operation = (uint8_t) recvBuffer[15];
 						if(operation == HAT_ADD)
 						{
-						 struct ether_addr * hat_mac=(struct ether_addr *) (recvBuffer+16) //[16];
-						 uint8_t cost=recvBuffer[22];
-						 struct ether_addr * switch_id =  (struct ether_addr *) (recvBuffer+23) //[23]
-						 bool has_additions=add_entry_hat(hat_mac, cost, switch_id, recvOnEtherPort);
+							 struct ether_addr * hat_mac=(struct ether_addr *) (recvBuffer+16); //[16];
+							 uint8_t cost=recvBuffer[22];
+							 struct ether_addr * switch_id =  (struct ether_addr *) (recvBuffer+23); //[23]
+							 bool has_additions=add_entry_hat(hat_mac, cost, switch_id, recvOnEtherPort);
 
-						 if(has_additions)
-						 {
-							print_hat();
-						 //whenever there is an entry in hat - sending an haa
-							int i;
-							uint8_t *payload = NULL;
-							uint8_t payloadLen;
-							for (i=0; i < numberOfInterfaces; i++) 
-							{
-								payload = (uint8_t*) calloc (1, HAA_SIZE);
-								payloadLen = build_haa_PAYLOAD(payload,hat_mac,cost,switch_id);
-								if (payloadLen) {
-								ctrlSend(interfaceNames[i], payload, payloadLen);
+							 if(has_additions)
+							 {
+								print_hat();
+							 //whenever there is an entry in hat - sending an haa
+								memset(interfaceNames, '\0', sizeof(char) * MAX_INTERFACES * MAX_INTERFACES);
+								int numberOfInterfaces = getActiveInterfaces(interfaceNames);
+								uint8_t *payload = NULL;
+								uint8_t payloadLen;
+								for (i=0; i < numberOfInterfaces; i++) 
+								{
+									payload = (uint8_t*) calloc (1, HAA_SIZE);
+									payloadLen = build_haa_PAYLOAD(payload,hat_mac,cost,switch_id);
+									if (payloadLen) {
+									ctrlSend(interfaceNames[i], payload, payloadLen);
+									}
+									//free(payload);
 								}
-								//free(payload);
-							}
-							printf("\nBuild haa successful. paydload length: %d\npayload : ",payloadLen);
-							int i=0;
-							for(i=0;i<15;i++)
-							{  printf("%02x:",payload[i]);  } 
-										printf("\n");
+								printf("\nBuild haa successful. paydload length: %d\npayload : ",payloadLen);
+								int i=0;
+								for(i=0;i<15;i++)
+								{  printf("%02x:",payload[i]);  } 
+								printf("\n");
 								free(payload); 
-						  }
+							}
 						}
 						if(operation == HAT_DEL) 
 						{  //Link failure code  }
 						else
 						{  printf("Unknown host address advertisement.");  }
-						break;
+					}
+					break;
 
 
 				default:
@@ -653,12 +656,15 @@ void mtp_start() {
 
 						print_hat();
 
+						memset(interfaceNames, '\0', sizeof(char) * MAX_INTERFACES * MAX_INTERFACES);
+						int numberOfInterfaces = getActiveInterfaces(interfaceNames);
+
 						//sending haa
 						int i = 0;
 						uint8_t *payload = NULL;
 						uint8_t payloadLen;
 						for (; i < numberOfInterfaces; i++) 
-							{
+						{
 							payload = (uint8_t*) calloc (1, HAA_SIZE);
 							payloadLen = build_haa_PAYLOAD(payload, (struct ether_addr *)&eheader->ether_shost, np->cost, sid);
 							if (payloadLen) {
@@ -675,8 +681,8 @@ void mtp_start() {
 
 				//forwarding the frame towards destination.
 				// lookup the dest in the hat and forward on appropriate port.
-				struct hat_tuple * 
-					hat_ptr =  (struct hat_tuple*) getInstance_hat();
+				//struct hat_tuple * 
+				hat_ptr =  (struct hat_tuple*) getInstance_hat();
 				while(hat_ptr != NULL)
 				{
 					if(memcmp(&hat_ptr->mac, &eheader->ether_dhost, sizeof (struct ether_addr)==0)
@@ -687,7 +693,7 @@ void mtp_start() {
 					}
 				}
 				if(hat_ptr==NULL)
-       					{ printf("Error could not send frame!!! destination not present in hat."); }
+       				{ printf("Error could not send frame!!! destination not present in hat."); }
 
 
 			   //sent (unicast)
