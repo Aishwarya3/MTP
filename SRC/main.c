@@ -568,10 +568,11 @@ void mtp_start() {
 				
 				while(lbcast_ptr != NULL)
 				{
-				 if(strcmp(recvOnEtherPort, lbcast_ptr->eth_name)==0)  //local host
-				 { 
-					 local=true;
-					 printf("Received port present in lbcast tbl i.e local=true");
+					 if(strcmp(recvOnEtherPort, lbcast_ptr->eth_name)==0)  //local host
+					 { 
+						 local=true;
+						 printf("Received port present in lbcast tbl i.e local=true");
+					 }
 				}
 
 				/*
