@@ -692,6 +692,9 @@ void mtp_start() {
 		    {
 				// RECEIVED A UNICAST ETHERNET FRAME:
 				printf("\nReceived a unicast frame.");
+
+				
+			    printf("Destination MAC: %s\n", ether_ntoa((struct ether_addr *)&eheader->ether_dhost));
 				
 				//forwarding the frame towards destination.
 				// lookup the dest in the hat and forward on appropriate port.
@@ -699,17 +702,18 @@ void mtp_start() {
 				hat_ptr =  (struct hat_tuple*) getInstance_hat();
 				while(hat_ptr != NULL)
 				{
+					printf("\n%d Result of memcmp: %d",memcmp(&hat_ptr->mac, &eheader->ether_dhost, sizeof (struct ether_addr)));
 					if(memcmp(&hat_ptr->mac, &eheader->ether_dhost, sizeof (struct ether_addr))==0)
 					{
 						//hat_ptr->path->port;
 						dataSend(hat_ptr->path->port, recvBuffer, recv_len);
-						printf("\nData frame sent successfully.");
+						printf("\nData frame sent successfully.\n");
 						break;
 					}
 				    hat_ptr=hat_ptr->next;
 				}
 				if(hat_ptr==NULL)
-       				{ printf("\nError could not send frame!!! destination not present in hat."); }
+       				{ printf("\nError could not send frame!!! destination not present in hat.\n"); }
 
 
 			   //sent (unicast)
