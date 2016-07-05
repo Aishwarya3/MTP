@@ -539,6 +539,7 @@ void mtp_start() {
 		if (recv_len > 0) {
 			char recvOnEtherPort[5];
 
+			printf("\n\n\nReceived a data frame.");
 			if_indextoname(src_addr.sll_ifindex, recvOnEtherPort);
 			char ctrlInterface[] = "eth0";
 
@@ -551,7 +552,7 @@ void mtp_start() {
 			eheader = (struct ether_header*)recvBuffer;
 
 			// read ethernet header
-			  printf("Source MAC: %s\n", ether_ntoa((struct ether_addr *) &eheader->ether_shost));
+			  printf("\nSource MAC: %s\n", ether_ntoa((struct ether_addr *) &eheader->ether_shost));
 			  printf("Destination MAC: %s\n", ether_ntoa((struct ether_addr *)&eheader->ether_dhost));
 			  printf("Message Type: %x\n", ntohs(eheader->ether_type));
 
@@ -562,7 +563,7 @@ void mtp_start() {
 				while(hat_ptr != NULL)
 				{
 				  if(memcmp(&hat_ptr->mac, &eheader->ether_shost, sizeof (struct ether_addr))==0)  //main.c line 241 eheader
-				   {  f1=true; break; printf("source already present in HAT."); }   //host (SENDER) already present
+				   {  f1=true; break; printf("\nsource already present in HAT."); }   //host (SENDER) already present
 				  hat_ptr=hat_ptr->next;
 				}
 
@@ -573,7 +574,7 @@ void mtp_start() {
 					 if(strcmp(recvOnEtherPort, lbcast_ptr->eth_name)==0)  //local host
 					 { 
 						 local=true;
-						 printf("Received port present in lbcast tbl i.e local=true");
+						 printf("\nReceived port present in lbcast tbl i.e local=true");
 					 }
 					 lbcast_ptr=lbcast_ptr->next;
 				}
@@ -591,7 +592,7 @@ void mtp_start() {
 				if(f1==false)  //IF NOT PRESENT add it to hat  (For now considering it as local but checking lbcast table just in case)
 				{
 					//local=true;
-					printf("Constructing HAT tuple");
+					printf("Constructing HAT tuple\n");
 					struct hat_tuple *new_hat = (struct hat_tuple*) calloc (1, sizeof(struct hat_tuple));
 					struct hat_new_path *np = (struct hat_new_path*) calloc (1, sizeof(struct hat_new_path));
 
@@ -620,9 +621,9 @@ void mtp_start() {
 						//hat_head=new;
 					    add_tuple_hat(new_hat);
 
-						printf("\nAddition successful");
+						/*printf("\nAddition successful");
 						printf("\nmac\t  local\t  port\t  cost");
-						printf("\n%s\t %d\t %s\t %d\n",ether_ntoa(&new_hat->mac),new_hat->local,np->port,np->cost);
+						printf("\n%s\t %d\t %s\t %d\n",ether_ntoa(&new_hat->mac),new_hat->local,np->port,np->cost); */
 
 						print_hat();
 
@@ -690,7 +691,7 @@ void mtp_start() {
 			else  //Unicast frame:
 		    {
 				// RECEIVED A UNICAST ETHERNET FRAME:
-				printf("Received a unicast frame.");
+				printf("\nReceived a unicast frame.");
 				
 				//forwarding the frame towards destination.
 				// lookup the dest in the hat and forward on appropriate port.
@@ -702,18 +703,19 @@ void mtp_start() {
 					{
 						//hat_ptr->path->port;
 						dataSend(hat_ptr->path->port, recvBuffer, recv_len);
+						printf("\nData frame sent successfully.");
 						break;
 					}
 				    hat_ptr=hat_ptr->next;
 				}
 				if(hat_ptr==NULL)
-       				{ printf("Error could not send frame!!! destination not present in hat."); }
+       				{ printf("\nError could not send frame!!! destination not present in hat."); }
 
 
 			   //sent (unicast)
 
 
-		    }
+			}
 
 		}
 		
