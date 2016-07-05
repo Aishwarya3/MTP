@@ -539,7 +539,6 @@ void mtp_start() {
 		if (recv_len > 0) {
 			char recvOnEtherPort[5];
 
-			printf("\n\n\nReceived a data frame.");
 			if_indextoname(src_addr.sll_ifindex, recvOnEtherPort);
 			char ctrlInterface[] = "eth0";
 
@@ -547,6 +546,8 @@ void mtp_start() {
 			if ((strcmp(recvOnEtherPort, ctrlInterface)) == 0) {
 				continue;
 			}
+
+			printf("\n\n\nReceived a data frame.");
 
 			// read ethernet header
 			eheader = (struct ether_header*)recvBuffer;
@@ -702,12 +703,12 @@ void mtp_start() {
 				hat_ptr =  (struct hat_tuple*) getInstance_hat();
 				while(hat_ptr != NULL)
 				{
-					printf("\n%d Result of memcmp: %d",memcmp(&hat_ptr->mac, &eheader->ether_dhost, sizeof (struct ether_addr)));
+					printf("\n Result of memcmp: %d",memcmp(&hat_ptr->mac, &eheader->ether_dhost, sizeof (struct ether_addr)));
 					if(memcmp(&hat_ptr->mac, &eheader->ether_dhost, sizeof (struct ether_addr))==0)
 					{
 						//hat_ptr->path->port;
 						dataSend(hat_ptr->path->port, recvBuffer, recv_len);
-						printf("\nData frame sent successfully.\n");
+						printf("\nData frame sent successfully on PORT : %s\n",hat_ptr->path->port);
 						break;
 					}
 				    hat_ptr=hat_ptr->next;
