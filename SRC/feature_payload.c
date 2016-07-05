@@ -102,56 +102,59 @@ int add_entry_hat(struct ether_addr *mac, uint8_t cost, struct ether_addr *switc
 	}
 	else // host already present in hat
 	{
-        struct hat_new_path *current = hat_ptr->path;
-		struct hat_new_path *prev = NULL;
-		bool btr_port_present=false;
-		while(current != NULL && cost >= current->cost) //same port same cost? & same port multiple cost?
-        {  //for now adding all 
-			if(strcmp(port,current->port)==0) // same port having lower cost or equal cost, so no addition	
-		              { btr_port_present=true; }			
-			prev=current;
-			current=current->next_path;
-				
-		}
-		if(!btr_port_present)
+		if(hat_ptr->local == false)
 		{
-			struct hat_new_path * new = (struct hat_new_path*) calloc (1, sizeof(struct hat_new_path));
-			new->cost=cost;
-			strcpy(new->port, port);
-			new->next_path=NULL;
-			if(prev==NULL)
-			{
-				new->next_path=hat_ptr->path;
-				hat_ptr->path=new;
-			}
-			else
-			{
-				prev->next_path=new;
-				new->next_path=current;
-			}
-			//removing old and having more cost entry of same port if present.
-			prev=new;
-			while(current != NULL && strcmp(port,current->port)!=0)
-			{
+			struct hat_new_path *current = hat_ptr->path;
+			struct hat_new_path *prev = NULL;
+			bool btr_port_present=false;
+			while(current != NULL && cost >= current->cost) //same port same cost? & same port multiple cost?
+			{  //for now adding all 
+				if(strcmp(port,current->port)==0) // same port having lower cost or equal cost, so no addition	
+						  { btr_port_present=true; }			
 				prev=current;
 				current=current->next_path;
+					
 			}
-			if(current!= NULL)
-			{  
-				prev->next_path=current->next_path;
-				free(current);
-			}
-
-			//printing:
-			printf("\n%s :",ether_ntoa(&hat_ptr->mac));
-			struct hat_new_path* cur =hat_ptr->path;
-			while(cur!=NULL)
+			if(!btr_port_present)
 			{
-			printf("\t%s %d,",cur->port,cur->cost);
-			cur=cur->next_path;
-			}
+				struct hat_new_path * new = (struct hat_new_path*) calloc (1, sizeof(struct hat_new_path));
+				new->cost=cost;
+				strcpy(new->port, port);
+				new->next_path=NULL;
+				if(prev==NULL)
+				{
+					new->next_path=hat_ptr->path;
+					hat_ptr->path=new;
+				}
+				else
+				{
+					prev->next_path=new;
+					new->next_path=current;
+				}
+				//removing old and having more cost entry of same port if present.
+				prev=new;
+				while(current != NULL && strcmp(port,current->port)!=0)
+				{
+					prev=current;
+					current=current->next_path;
+				}
+				if(current!= NULL)
+				{  
+					prev->next_path=current->next_path;
+					free(current);
+				}
 
-			return true; // has addition.
+				//printing:
+				/*printf("\n%s :",ether_ntoa(&hat_ptr->mac));
+				struct hat_new_path* cur =hat_ptr->path;
+				while(cur!=NULL)
+				{
+				printf("\t%s %d,",cur->port,cur->cost);
+				cur=cur->next_path;
+				} */
+
+				return true; // has addition.
+			}
 		}
 		else
 		{ return false; }
@@ -168,7 +171,7 @@ void print_hat()
 	struct hat_new_path * nextpath = (struct hat_new_path*) calloc (1, sizeof(struct hat_new_path));
 
 	printf("\n\n\n HAT entries:");
-	printf("\nHost Mac\t\t\t Switch-ID\t\t\t Local\t\t\t Paths:");
+	printf("\nHost Mac\t\t Switch-ID\t\t Local\t\t\t Paths:");
 	nextrow=hat_head;
 	while(nextrow!=NULL)
 	{

@@ -488,6 +488,7 @@ void mtp_start() {
 					    uint8_t operation = (uint8_t) recvBuffer[15];
 						if(operation == HAT_ADD)
 						{
+							printf("\n\nReceived HAA (add)\n");
 							 struct ether_addr * hat_mac=(struct ether_addr *) (recvBuffer+16); //[16];
 							 uint8_t cost=recvBuffer[22];
 							 struct ether_addr * switch_id =  (struct ether_addr *) (recvBuffer+23); //[23]
@@ -511,14 +512,14 @@ void mtp_start() {
 									}
 									//free(payload);
 								}
-								printf("\nBuild haa successful. paydload length: %d\npayload : ",payloadLen);
+								/*printf("\nBuild haa successful. paydload length: %d\npayload : ",payloadLen);
 								for(i=0;i<15;i++)
 								{  printf("%02x:",payload[i]);  } 
-								printf("\n");
+								printf("\n"); */
 								free(payload); 
 							}
 						}
-						if(operation == HAT_DEL) 
+						else if(operation == HAT_DEL) 
 						{  //Link failure code  
 						}
 						else
@@ -640,9 +641,9 @@ void mtp_start() {
 							ctrlSend(interfaceNames[i], payload, payloadLen);
 							}
 						}
-						printf("\nBuild haa successful. paydload length: %d\npayload : ",payloadLen);
+						/*printf("\nBuild haa successful. paydload length: %d\npayload : ",payloadLen);
 						for(i=0;i<15;i++)
-						{  printf("%02x:",payload[i]);  } 
+						{  printf("%02x:",payload[i]);  } */
 						free(payload); 
 
 				}
