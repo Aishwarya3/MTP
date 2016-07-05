@@ -562,6 +562,7 @@ void mtp_start() {
 				{
 				  if(memcmp(&hat_ptr->mac, &eheader->ether_shost, sizeof (struct ether_addr))==0)  //main.c line 241 eheader
 				   {  f1=true; break; printf("source already present in HAT."); }   //host (SENDER) already present
+				  hat_ptr=hat_ptr->next;
 				}
 
 				struct local_bcast_tuple* lbcast_ptr = getInstance_lbcast_LL();
@@ -573,6 +574,7 @@ void mtp_start() {
 						 local=true;
 						 printf("Received port present in lbcast tbl i.e local=true");
 					 }
+					 lbcast_ptr=lbcast_ptr->next;
 				}
 
 				/*
@@ -697,10 +699,11 @@ void mtp_start() {
 				{
 					if(memcmp(&hat_ptr->mac, &eheader->ether_dhost, sizeof (struct ether_addr))==0)
 					{
-					//hat_ptr->path->port;
-					dataSend(hat_ptr->path->port, recvBuffer, recv_len);
-					break;
+						//hat_ptr->path->port;
+						dataSend(hat_ptr->path->port, recvBuffer, recv_len);
+						break;
 					}
+				    hat_ptr=hat_ptr->next;
 				}
 				if(hat_ptr==NULL)
        				{ printf("Error could not send frame!!! destination not present in hat."); }

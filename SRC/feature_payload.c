@@ -65,6 +65,7 @@ int add_entry_hat(struct ether_addr *mac, uint8_t cost, struct ether_addr *switc
 	   {  f1=true; 
               break;  // hat_ptr points to the node containing the required host.
 	   }
+	  hat_ptr=hat_ptr->next;
     }
 
 	/*struct local_bcast_tuple* lbcast_ptr = getInstance_lbcast_LL();
@@ -73,6 +74,7 @@ int add_entry_hat(struct ether_addr *mac, uint8_t cost, struct ether_addr *switc
 	{
 	 if(recvOnEtherPort == lbcast_ptr->eth_name)
 	    local=true;
+	lbcast_ptr=lbcast_ptr->next;
 	}  */
 
 	if(f1==false) //host not present in hat
