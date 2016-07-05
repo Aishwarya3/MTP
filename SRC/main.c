@@ -561,7 +561,7 @@ void mtp_start() {
 				while(hat_ptr != NULL)
 				{
 				  if(memcmp(&hat_ptr->mac, &eheader->ether_shost, sizeof (struct ether_addr))==0)  //main.c line 241 eheader
-				   {  f1=true; break;  }   //host (SENDER) already present
+				   {  f1=true; break; printf("source already present in HAT."); }   //host (SENDER) already present
 				}
 
 				struct local_bcast_tuple* lbcast_ptr = getInstance_lbcast_LL();
@@ -569,7 +569,9 @@ void mtp_start() {
 				while(lbcast_ptr != NULL)
 				{
 				 if(strcmp(recvOnEtherPort, lbcast_ptr->eth_name)==0)  //local host
-					local=true;
+				 { 
+					 local=true;
+					 printf("Received port present in lbcast tbl i.e local=true");
 				}
 
 				/*
@@ -585,6 +587,7 @@ void mtp_start() {
 				if(f1==false)  //IF NOT PRESENT add it to hat  (For now considering it as local but checking lbcast table just in case)
 				{
 					//local=true;
+					printf("Constructing HAT tuple");
 					struct hat_tuple *new_hat = (struct hat_tuple*) calloc (1, sizeof(struct hat_tuple));
 					struct hat_new_path *np = (struct hat_new_path*) calloc (1, sizeof(struct hat_new_path));
 
@@ -635,7 +638,6 @@ void mtp_start() {
 							}
 						}
 						printf("\nBuild haa successful. paydload length: %d\npayload : ",payloadLen);
-						i=0;
 						for(i=0;i<15;i++)
 						{  printf("%02x:",payload[i]);  } 
 						free(payload); 
