@@ -550,51 +550,11 @@ void mtp_start() {
 			eheader = (struct ether_header*)recvBuffer;
 
 			// read ethernet header
-			/*printf("Source MAC: %s\n", ether_ntoa((struct ether_addr *) &eheader->ether_shost));
+			  printf("Source MAC: %s\n", ether_ntoa((struct ether_addr *) &eheader->ether_shost));
 			  printf("Destination MAC: %s\n", ether_ntoa((struct ether_addr *)&eheader->ether_dhost));
-			  printf("Message Type: %x\n", ntohs(eheader->ether_type));*/
+			  printf("Message Type: %x\n", ntohs(eheader->ether_type));
 
-			// Check if the data frame is a broadcast.
-			if (strncmp(ether_ntoa((struct ether_addr *)&eheader->ether_dhost), "ff:ff:ff:ff:ff:ff", 17) == 0) {
-				// if the frame is a broadcast frame.
-				printf("Received broadcast frame\n");
 
-				// Send it to all host ports, first.
-				struct local_bcast_tuple* current =  getInstance_lbcast_LL();
-
-				for (; current != NULL; current = current->next) {
-					// port should not be the same from where it received frame.
-					if (strcmp(current->eth_name, recvOnEtherPort) != 0) {
-						dataSend(current->eth_name, recvBuffer, recv_len);
-						printf("Sent to host %s\n", current->eth_name);
-					}
-				}
-
-				// Next, Send to all ports on Child PVID Table.
-				struct child_pvid_tuple* cpt = getInstance_cpvid_LL();
-
-				for (; cpt != NULL; cpt = cpt->next) {
-					// port should not be the same from where it received frame.
-					if (strcmp(cpt->child_port, recvOnEtherPort) != 0) {
-						dataSend(cpt->child_port, recvBuffer, recv_len);
-						printf("Sent to child %s\n", cpt->child_port);
-					}
-				}         
-
-				// Next Send it port from where current PVID is acquired, if it is not same as the received port.
-				if (!isRoot) {
-					struct vid_addr_tuple* vid_t = getInstance_vid_tbl_LL(); 
-					if (strcmp(vid_t->eth_name, recvOnEtherPort) != 0) {
-						dataSend(vid_t->eth_name, recvBuffer, recv_len);
-						printf("Sent to PVID%s\n", vid_t->eth_name);
-					} 
-				}
-				//print_entries_cpvid_LL();
-			} 
-			else  //Unicast frame:
-		    {
-				// RECEIVED A UNICAST ETHERNET FRAME:
-				printf("Received a unicast frame.");
 				struct hat_tuple * hat_ptr =  (struct hat_tuple*) getInstance_hat();
 				bool f1=false;
 				bool local = false;
@@ -682,6 +642,50 @@ void mtp_start() {
 
 				}
 
+
+
+			// Check if the data frame is a broadcast.
+			if (strncmp(ether_ntoa((struct ether_addr *)&eheader->ether_dhost), "ff:ff:ff:ff:ff:ff", 17) == 0) {
+				// if the frame is a broadcast frame.
+				printf("Received broadcast frame\n");
+
+				// Send it to all host ports, first.
+				struct local_bcast_tuple* current =  getInstance_lbcast_LL();
+
+				for (; current != NULL; current = current->next) {
+					// port should not be the same from where it received frame.
+					if (strcmp(current->eth_name, recvOnEtherPort) != 0) {
+						dataSend(current->eth_name, recvBuffer, recv_len);
+						printf("Sent to host %s\n", current->eth_name);
+					}
+				}
+
+				// Next, Send to all ports on Child PVID Table.
+				struct child_pvid_tuple* cpt = getInstance_cpvid_LL();
+
+				for (; cpt != NULL; cpt = cpt->next) {
+					// port should not be the same from where it received frame.
+					if (strcmp(cpt->child_port, recvOnEtherPort) != 0) {
+						dataSend(cpt->child_port, recvBuffer, recv_len);
+						printf("Sent to child %s\n", cpt->child_port);
+					}
+				}         
+
+				// Next Send it port from where current PVID is acquired, if it is not same as the received port.
+				if (!isRoot) {
+					struct vid_addr_tuple* vid_t = getInstance_vid_tbl_LL(); 
+					if (strcmp(vid_t->eth_name, recvOnEtherPort) != 0) {
+						dataSend(vid_t->eth_name, recvBuffer, recv_len);
+						printf("Sent to PVID%s\n", vid_t->eth_name);
+					} 
+				}
+				//print_entries_cpvid_LL();
+			} 
+			else  //Unicast frame:
+		    {
+				// RECEIVED A UNICAST ETHERNET FRAME:
+				printf("Received a unicast frame.");
+				
 				//forwarding the frame towards destination.
 				// lookup the dest in the hat and forward on appropriate port.
 				//struct hat_tuple * 
