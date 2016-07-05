@@ -171,11 +171,11 @@ void print_hat()
 	struct hat_new_path * nextpath = (struct hat_new_path*) calloc (1, sizeof(struct hat_new_path));
 
 	printf("\n\n\n HAT entries:");
-	printf("\nHost Mac\t\t Switch-ID\t\t Local\t\t\t Paths:");
+	printf("\nHost Mac\t\t\tSwitch-ID\t\t Local\t\t\t Paths:");
 	nextrow=hat_head;
 	while(nextrow!=NULL)
 	{
-		printf("\n%s\t %s\t %d\t",ether_ntoa(&nextrow->mac),ether_ntoa(&nextrow->switch_id),nextrow->local);
+		printf("\n%s\t\t%s\t %d\t",ether_ntoa(&nextrow->mac),ether_ntoa(&nextrow->switch_id),nextrow->local);
         nextpath=nextrow->path;
 		while(nextpath!=NULL)
 		{

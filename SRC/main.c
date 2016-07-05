@@ -564,7 +564,9 @@ void mtp_start() {
 				while(hat_ptr != NULL)
 				{
 				  if(memcmp(&hat_ptr->mac, &eheader->ether_shost, sizeof (struct ether_addr))==0)  //main.c line 241 eheader
-				   {  f1=true; break; printf("\nsource already present in HAT."); }   //host (SENDER) already present
+				  {  
+					  f1=true; break; //printf("\nsource already present in HAT."); 
+				  }   //host (SENDER) already present
 				  hat_ptr=hat_ptr->next;
 				}
 
@@ -575,7 +577,7 @@ void mtp_start() {
 					 if(strcmp(recvOnEtherPort, lbcast_ptr->eth_name)==0)  //local host
 					 { 
 						 local=true;
-						 printf("\nReceived port present in lbcast tbl i.e local=true");
+						 //printf("\nReceived port present in lbcast tbl i.e local=true");
 					 }
 					 lbcast_ptr=lbcast_ptr->next;
 				}
@@ -593,7 +595,7 @@ void mtp_start() {
 				if(f1==false)  //IF NOT PRESENT add it to hat  (For now considering it as local but checking lbcast table just in case)
 				{
 					//local=true;
-					printf("Constructing HAT tuple\n");
+					//printf("Constructing HAT tuple\n");
 					struct hat_tuple *new_hat = (struct hat_tuple*) calloc (1, sizeof(struct hat_tuple));
 					struct hat_new_path *np = (struct hat_new_path*) calloc (1, sizeof(struct hat_new_path));
 
@@ -695,7 +697,7 @@ void mtp_start() {
 				printf("\nReceived a unicast frame.");
 
 				
-			    printf("Destination MAC: %s\n", ether_ntoa((struct ether_addr *)&eheader->ether_dhost));
+			    //printf("Destination MAC: %s\n", ether_ntoa((struct ether_addr *)&eheader->ether_dhost));
 				
 				//forwarding the frame towards destination.
 				// lookup the dest in the hat and forward on appropriate port.
@@ -708,7 +710,7 @@ void mtp_start() {
 					{
 						//hat_ptr->path->port;
 						dataSend(hat_ptr->path->port, recvBuffer, recv_len);
-						printf("\nData frame sent successfully on PORT : %s\n",hat_ptr->path->port);
+						printf("\nData frame sent on PORT : %s\n",hat_ptr->path->port);
 						break;
 					}
 				    hat_ptr=hat_ptr->next;
@@ -716,14 +718,9 @@ void mtp_start() {
 				if(hat_ptr==NULL)
        				{ printf("\nError could not send frame!!! destination not present in hat.\n"); }
 
-
 			   //sent (unicast)
-
-
 			}
-
 		}
-		
 		// check if there are any pending VID Adverts
 	} // end of while
 }
